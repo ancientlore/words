@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"golang.org/x/net/context"
+	"io"
 	"os"
 	"os/signal"
 	"regexp"
@@ -52,7 +53,7 @@ func accumulator(ctx context.Context, ch chan string) {
 		select {
 		case s, op := <-ch:
 			if !op {
-				print(m)
+				print(m, 0, os.Stdout)
 				return
 			}
 			if x, ok := m[s]; ok {
@@ -61,30 +62,30 @@ func accumulator(ctx context.Context, ch chan string) {
 				m[s] = 1
 			}
 		case <-tck.C:
-			print(m)
+			print(m, *top, os.Stderr)
 		case <-done:
-			print(m)
+			print(m, 0, os.Stdout)
 			return
 		}
 	}
 }
 
-func print(m map[string]int) {
+func print(m map[string]int, topNum int, f io.Writer) {
 	var sl []string
 	for s, x := range m {
 		sl = append(sl, fmt.Sprintf("%8d %s", x, s))
 	}
 	sort.Strings(sl)
-	fmt.Println()
+	fmt.Fprintln(f)
 	min := 0
-	if *top > 0 {
-		min = len(sl) - *top
+	if topNum > 0 {
+		min = len(sl) - topNum
 		if min < 0 {
 			min = 0
 		}
 	}
 	for i := len(sl) - 1; i >= min; i-- {
-		fmt.Println(sl[i])
+		fmt.Fprintln(f, sl[i])
 	}
 }
 
