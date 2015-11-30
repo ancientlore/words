@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"golang.org/x/net/context"
 	"os"
@@ -9,6 +10,11 @@ import (
 	"sort"
 	"strings"
 	"time"
+)
+
+var (
+	top      = flag.Int("top", 0, "Only print top entries")
+	interval = flag.Duration("interval", time.Minute, "Print interval")
 )
 
 func reader(ctx context.Context) chan string {
@@ -39,7 +45,7 @@ func reader(ctx context.Context) chan string {
 
 func accumulator(ctx context.Context, ch chan string) {
 	done := ctx.Done()
-	tck := time.NewTicker(1 * time.Minute)
+	tck := time.NewTicker(*interval)
 
 	m := make(map[string]int)
 	for {
@@ -70,12 +76,21 @@ func print(m map[string]int) {
 	}
 	sort.Strings(sl)
 	fmt.Println()
-	for i := len(sl) - 1; i >= 0; i-- {
+	min := 0
+	if *top > 0 {
+		min = len(sl) - *top
+		if min < 0 {
+			min = 0
+		}
+	}
+	for i := len(sl) - 1; i >= min; i-- {
 		fmt.Println(sl[i])
 	}
 }
 
 func main() {
+	flag.Parse()
+
 	// get context
 	ctx, cancel := context.WithCancel(context.Background())
 
