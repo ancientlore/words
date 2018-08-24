@@ -1,9 +1,9 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
-	"golang.org/x/net/context"
 	"io"
 	"os"
 	"os/signal"
